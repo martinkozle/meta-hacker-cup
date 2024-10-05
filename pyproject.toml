@@ -1,0 +1,18 @@
+[project]
+name = "meta-hacker-cup"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv]
+package = false
+dev-dependencies = [
+    "mypy>=1.11.2",
+    "ruff>=0.6.9",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
