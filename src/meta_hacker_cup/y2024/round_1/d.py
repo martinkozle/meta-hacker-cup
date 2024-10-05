@@ -62,17 +62,28 @@ class Solver:
                 return
 
 
-@lru_cache(maxsize=1_000_000_000)
-def rec_count(e: str, ind: int, prev: str) -> int:
+def rec_count(e: str, ind: int, prev: str, r_cache: dict[tuple[int, str], int]) -> int:
+    if (ind, prev) in r_cache:
+        return r_cache[(ind, prev)]
     if ind == len(e):
         return 1
     if e[ind] == "0" and prev in ("1", "2"):
-        return rec_count(e, ind + 1, prev + e[ind])
+        res = rec_count(e, ind + 1, prev + e[ind], r_cache) % 998244353
+        r_cache[ind, prev] = res
+        return res
     if e[ind] == "0":
+        r_cache[ind, prev] = 0
         return 0
     if prev == "1" or (prev == "2" and e[ind] in "0123456"):
-        return rec_count(e, ind + 1, e[ind]) + rec_count(e, ind + 1, prev + e[ind])
-    return rec_count(e, ind + 1, e[ind])
+        res = (
+            rec_count(e, ind + 1, e[ind], r_cache)
+            + rec_count(e, ind + 1, prev + e[ind], r_cache)
+        ) % 998244353
+        r_cache[ind, prev] = res
+        return res
+    res = rec_count(e, ind + 1, e[ind], r_cache) % 998244353
+    r_cache[ind, prev] = res
+    return res
 
 
 def solve(e: str, k: int) -> tuple[str, int]:
@@ -80,35 +91,30 @@ def solve(e: str, k: int) -> tuple[str, int]:
     solver.rec(ind=1)
     final_e = "".join(solver.final_e[1:-1])
 
-    # count = rec_count(final_e, 0, prev="")
-    stack_list: list[tuple[int, str]] = [(0, "")]
-    cache_dict: dict[tuple[int, str], int] = {}
-    count = 0
-    while stack_list:
-        ind, prev = stack_list.pop()
-        if ind == len(final_e):
-            count += 1
-            continue
-        if (ind, prev) in cache_dict:
-            count += cache_dict[(ind, prev)]
-            continue
-        if final_e[ind] == "0" and prev in ("1", "2"):
-            stack_list.append((ind + 1, prev + final_e[ind]))
-            continue
-        if final_e[ind] == "0":
-            cache_dict[(ind, prev)] = 0
-            continue
-        if prev == "1" or (prev == "2" and final_e[ind] in "0123456"):
-            stack_list.append((ind + 1, final_e[ind]))
-            stack_list.append((ind + 1, prev + final_e[ind]))
-            continue
-        stack_list.append((ind + 1, final_e[ind]))
-        cache_dict[(ind, prev)] = 1
+    count = rec_count(final_e, 0, prev="", r_cache={})
+    # stack_list: list[tuple[int, str]] = [(0, "")]
+    # count: int = 0
+    # while stack_list:
+    #     ind, prev = stack_list.pop()
+    #     if ind == len(final_e):
+    #         count = (count + 1) % 998244353
+    #         continue
+    #     if final_e[ind] == "0" and prev in ("1", "2"):
+    #         stack_list.append((ind + 1, prev + final_e[ind]))
+    #         continue
+    #     if final_e[ind] == "0":
+    #         continue
+    #     if prev == "1" or (prev == "2" and final_e[ind] in "0123456"):
+    #         stack_list.append((ind + 1, final_e[ind]))
+    #         stack_list.append((ind + 1, prev + final_e[ind]))
+    #         continue
+    #     stack_list.append((ind + 1, final_e[ind]))
     return final_e, count
 
 
 def main() -> None:
     sys.setrecursionlimit(2**31 - 1)
+    sys.set_int_max_str_digits(2**31 - 1)
     T = int(input())
     for t in range(T):
         e, k_str = input().split()
